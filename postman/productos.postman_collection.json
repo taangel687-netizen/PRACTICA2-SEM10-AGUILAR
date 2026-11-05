@@ -1,0 +1,218 @@
+{
+  "info": {
+    "name": "Semana 10 · API de productos",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:3010"
+    }
+  ],
+  "item": [
+    {
+      "name": "CRUD y validación",
+      "item": [
+        {
+          "name": "Crear",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/productos",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cuaderno\",\n  \"precio\": 12.5,\n  \"stock\": 20\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Content-Type JSON\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^application\\/json\\b/i));",
+                  "pm.test(\"Esquema JSON\", () => pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"id\",\"nombre\",\"precio\",\"stock\"],\"properties\":{\"id\":{\"type\":\"integer\"},\"nombre\":{\"type\":\"string\"},\"precio\":{\"type\":\"string\"},\"stock\":{\"type\":\"integer\"}}}));",
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"productoId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/productos"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Content-Type JSON\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^application\\/json\\b/i));",
+                  "pm.test(\"Esquema JSON\", () => pm.response.to.have.jsonSchema({\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"id\",\"nombre\",\"precio\",\"stock\"],\"properties\":{\"id\":{\"type\":\"integer\"},\"nombre\":{\"type\":\"string\"},\"precio\":{\"type\":\"string\"},\"stock\":{\"type\":\"integer\"}}}}));",
+                  "pm.test(\"Producto persistido\", () => pm.expect(pm.response.json().some(p => p.id === Number(pm.collectionVariables.get(\"productoId\")))).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/productos/{{productoId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cuaderno\",\n  \"precio\": 12.5,\n  \"stock\": 35\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Content-Type JSON\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^application\\/json\\b/i));",
+                  "pm.test(\"Esquema JSON\", () => pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"id\",\"nombre\",\"precio\",\"stock\"],\"properties\":{\"id\":{\"type\":\"integer\"},\"nombre\":{\"type\":\"string\"},\"precio\":{\"type\":\"string\"},\"stock\":{\"type\":\"integer\"}}}));",
+                  "pm.test(\"Stock actualizado\", () => pm.expect(pm.response.json().stock).to.equal(35));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/productos/{{productoId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Content-Type JSON\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^application\\/json\\b/i));",
+                  "pm.test(\"Esquema JSON\", () => pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"mensaje\"],\"properties\":{\"mensaje\":{\"type\":\"string\"}}}));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar inexistente",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/productos/{{productoId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Content-Type JSON\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^application\\/json\\b/i));",
+                  "pm.test(\"Esquema JSON\", () => pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"error\"],\"properties\":{\"error\":{\"type\":\"string\"}}}));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Stock inválido",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/productos",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cuaderno\",\n  \"precio\": 12.5,\n  \"stock\": -1\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Content-Type JSON\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^application\\/json\\b/i));",
+                  "pm.test(\"Esquema JSON\", () => pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"error\"],\"properties\":{\"error\":{\"type\":\"string\"}}}));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ID inválido",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/productos/abc"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Content-Type JSON\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^application\\/json\\b/i));",
+                  "pm.test(\"Esquema JSON\", () => pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"error\"],\"properties\":{\"error\":{\"type\":\"string\"}}}));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Base de datos no disponible",
+      "item": [
+        {
+          "name": "Listar sin conexión",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/productos"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 500\", () => pm.response.to.have.status(500));",
+                  "pm.test(\"Content-Type JSON\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^application\\/json\\b/i));",
+                  "pm.test(\"Esquema JSON\", () => pm.response.to.have.jsonSchema({\"type\":\"object\",\"required\":[\"error\"],\"properties\":{\"error\":{\"type\":\"string\"}}}));",
+                  "pm.test(\"Error sin detalles internos\", () => pm.expect(pm.response.json()).to.deep.equal({ error: \"Error interno del servidor.\" }));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
