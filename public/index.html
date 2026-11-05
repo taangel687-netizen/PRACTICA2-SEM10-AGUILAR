@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inventario de productos</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f2f6fa; color: #172c40; font: 16px system-ui, sans-serif; }
+    main { max-width: 1080px; margin: auto; padding: 32px 20px; }
+    header { background: #102e43; color: white; border-radius: 16px; padding: 28px; }
+    header p { color: #b8e4e0; margin: 0; }
+    h1 { margin: 8px 0; font-size: clamp(28px, 5vw, 40px); }
+    h2 { margin: 0 0 16px; font-size: 21px; }
+    section { background: white; border: 1px solid #d4dfe8; border-radius: 14px; padding: 22px; margin-top: 20px; }
+    .fields { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; }
+    label { display: grid; gap: 6px; font-weight: 600; }
+    input, button { font: inherit; border-radius: 7px; padding: 9px 12px; }
+    input { width: 100%; border: 1px solid #94a8b9; color: inherit; }
+    button { cursor: pointer; border: 1px solid #a9bbc9; background: white; color: inherit; font-weight: 600; }
+    button:disabled { opacity: .6; cursor: wait; }
+    .primary { background: #075e57; border-color: #075e57; color: white; }
+    .delete { color: #9a2637; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    form > .actions { margin-top: 16px; }
+    .table-scroll { overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; text-align: left; }
+    th, td { border-bottom: 1px solid #dce5ed; padding: 12px 10px; }
+    th { background: #edf4f8; }
+    td:nth-child(2) { overflow-wrap: anywhere; }
+    #estado { min-height: 1.5em; margin-bottom: 0; color: #075e57; }
+    #estado[data-error] { color: #9a2637; }
+    a { color: #075e57; }
+    :focus-visible { outline: 3px solid #0b786f; outline-offset: 3px; }
+    @media (max-width: 580px) { .fields { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p>Desarrollo de Aplicaciones Web · Semana 10</p>
+      <h1>Inventario de productos</h1>
+      <p>Administra los registros guardados en MySQL a través de la API.</p>
+    </header>
+
+    <section aria-labelledby="titulo-formulario">
+      <h2 id="titulo-formulario">Nuevo producto</h2>
+      <form id="producto">
+        <div class="fields">
+          <label>Nombre <input name="nombre" maxlength="120" required></label>
+          <label>Precio (S/) <input name="precio" type="number" min="0" max="99999999.99" step="0.01" required></label>
+          <label>Stock <input name="stock" type="number" min="0" max="4294967295" step="1" required></label>
+        </div>
+        <div class="actions">
+          <button class="primary" id="guardar">Agregar producto</button>
+          <button type="button" id="cancelar" hidden>Cancelar edición</button>
+        </div>
+      </form>
+      <p id="estado" role="status"></p>
+    </section>
+
+    <section aria-labelledby="titulo-lista">
+      <h2 id="titulo-lista">Productos registrados</h2>
+      <p id="vacio">Cargando productos…</p>
+      <div class="table-scroll">
+        <table id="tabla" hidden>
+          <thead><tr><th>ID</th><th>Nombre</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p><a href="/api/productos" target="_blank" rel="noopener">Ver respuesta JSON de la API</a></p>
+    </section>
+  </main>
+  <script>
+    const form = document.querySelector('#producto');
+    const nombre = form.elements.nombre;
+    const precio = form.elements.precio;
+    const stock = form.elements.stock;
+    const tabla = document.querySelector('#tabla');
+    const tbody = tabla.tBodies[0];
+    const vacio = document.querySelector('#vacio');
+    const estado = document.querySelector('#estado');
+    const guardar = document.querySelector('#guardar');
+    const cancelar = document.querySelector('#cancelar');
+    const titulo = document.querySelector('#titulo-formulario');
+    let idEnEdicion = null;
+    let ocupado = false;
+
+    async function api(ruta = '', method = 'GET', datos) {
+      const respuesta = await fetch('/api/productos' + ruta, {
+        method,
+        ...(datos && {
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(datos),
+        }),
+      });
+      const resultado = await respuesta.json();
+      if (!respuesta.ok) throw new Error(resultado.error);
+      return resultado;
+    }
+
+    function informar(mensaje, error = false) {
+      estado.textContent = mensaje;
+      estado.toggleAttribute('data-error', error);
+    }
+
+    function reiniciarFormulario() {
+      form.reset();
+      idEnEdicion = null;
+      titulo.textContent = 'Nuevo producto';
+      guardar.textContent = 'Agregar producto';
+      cancelar.hidden = true;
+    }
+
+    function editar(producto) {
+      idEnEdicion = producto.id;
+      nombre.value = producto.nombre;
+      precio.value = producto.precio;
+      stock.value = producto.stock;
+      titulo.textContent = 'Editar producto #' + producto.id;
+      guardar.textContent = 'Guardar cambios';
+      cancelar.hidden = false;
+      informar('');
+      nombre.focus();
+    }
+
+    function boton(texto, accion, clase = '') {
+      const elemento = document.createElement('button');
+      elemento.type = 'button';
+      elemento.textContent = texto;
+      elemento.className = clase;
+      elemento.addEventListener('click', accion);
+      return elemento;
+    }
+
+    async function listar() {
+      const productos = await api();
+      tbody.replaceChildren();
+      for (const producto of productos) {
+        const fila = tbody.insertRow();
+        for (const valor of [producto.id, producto.nombre, 'S/ ' + producto.precio, producto.stock]) {
+          fila.insertCell().textContent = valor;
+        }
+        const acciones = document.createElement('div');
+        acciones.className = 'actions';
+        acciones.append(
+          boton('Editar', () => editar(producto)),
+          boton('Eliminar', () => eliminar(producto), 'delete'),
+        );
+        fila.insertCell().append(acciones);
+      }
+      vacio.textContent = 'Todavía no hay productos. Agrega el primero con el formulario.';
+      vacio.hidden = productos.length > 0;
+      tabla.hidden = productos.length === 0;
+    }
+
+    async function cambiar(operacion, mensaje) {
+      if (ocupado) return;
+      ocupado = true;
+      document.querySelectorAll('button').forEach(boton => boton.disabled = true);
+      informar('Guardando…');
+      try {
+        await operacion();
+        informar(mensaje);
+        try {
+          await listar();
+        } catch {
+          informar(mensaje + ' No se pudo actualizar la lista. Recarga la página.', true);
+        }
+      } catch (error) {
+        informar(error.message || 'No se pudo completar la operación.', true);
+      } finally {
+        ocupado = false;
+        document.querySelectorAll('button').forEach(boton => boton.disabled = false);
+      }
+    }
+
+    async function eliminar(producto) {
+      if (!confirm('¿Eliminar «' + producto.nombre + '»?')) return;
+      await cambiar(async () => {
+        await api('/' + producto.id, 'DELETE');
+        if (idEnEdicion === producto.id) reiniciarFormulario();
+      }, 'Producto eliminado.');
+    }
+
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      const datos = {
+        nombre: nombre.value.trim(),
+        precio: precio.valueAsNumber,
+        stock: stock.valueAsNumber,
+      };
+      const id = idEnEdicion;
+      cambiar(async () => {
+        await api(id === null ? '' : '/' + id, id === null ? 'POST' : 'PUT', datos);
+        reiniciarFormulario();
+      }, id === null ? 'Producto agregado.' : 'Cambios guardados.');
+    });
+
+    cancelar.addEventListener('click', () => {
+      reiniciarFormulario();
+      informar('');
+    });
+
+    listar().catch(error => {
+      vacio.textContent = 'No se pudo cargar la lista. Recarga para volver a intentar.';
+      informar(error.message, true);
+    });
+  </script>
+</body>
+</html>

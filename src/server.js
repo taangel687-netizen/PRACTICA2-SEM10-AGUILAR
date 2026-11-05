@@ -1,5 +1,6 @@
 require('dotenv').config({ quiet: true });
 
+const path = require('node:path');
 const express = require('express');
 const cors = require('cors');
 const productosRoutes = require('./routes/productosRoutes');
@@ -11,6 +12,7 @@ app.disable('x-powered-by');
 app.use(cors());
 app.use(express.json());
 app.use('/api/productos', productosRoutes);
+app.use(express.static(path.join(__dirname, '../public')));
 
 app.use((req, res) => res.status(404).json({ error: 'Ruta no encontrada.' }));
 app.use((error, req, res, next) => {
@@ -26,5 +28,5 @@ app.use((error, req, res, next) => {
 });
 
 app.listen(port, '127.0.0.1', () => {
-  console.log(`API de productos disponible en http://127.0.0.1:${port}/api/productos`);
+  console.log(`Inventario disponible en http://127.0.0.1:${port}/`);
 });

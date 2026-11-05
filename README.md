@@ -19,6 +19,10 @@ Inicia MySQL en XAMPP y abre **PRESENTAR.cmd** con doble clic. El lanzador ejecu
 
 4. Completa `.env` con tu usuario, contraseña y puerto de MySQL. Ejecuta `npm start`. La API escucha en `http://127.0.0.1:3010/api/productos` con la configuración de ejemplo.
 
+## Interfaz web
+
+Con la API en ejecución, abre [el inventario](http://127.0.0.1:3010/) en el navegador. El formulario permite agregar productos y la tabla permite editarlos o eliminarlos. La interfaz usa los mismos endpoints que la colección de Postman.
+
 ## Endpoints
 
 | Método y ruta | Operación | Éxito |
