@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{baseUrl}}/api/productos"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "nombre": "Cuaderno",
+      "precio": 12.5,
+      "stock": 20
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP 201", () => pm.response.to.have.status(201));
+      pm.test("Content-Type JSON", () => pm.expect(pm.response.headers.get("Content-Type")).to.match(/^application\/json\b/i));
+      pm.test("Esquema JSON", () => pm.response.to.have.jsonSchema({"type":"object","required":["id","nombre","precio","stock"],"properties":{"id":{"type":"integer"},"nombre":{"type":"string"},"precio":{"type":"string"},"stock":{"type":"integer"}}}));
+      if (pm.response.code === 201) pm.collectionVariables.set("productoId", pm.response.json().id);
+    language: text/javascript
+order: 1000

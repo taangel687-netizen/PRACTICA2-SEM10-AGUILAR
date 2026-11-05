@@ -2,6 +2,10 @@
 
 Práctica de Desarrollo de Aplicaciones Web (IS093A). API REST con Node.js y Express. Usa un pool de `mysql2/promise` y sentencias preparadas para acceder a la tabla `productos` de `db_lab10`.
 
+## Demostración en Windows
+
+Inicia MySQL en XAMPP y abre **PRESENTAR.cmd** con doble clic. El lanzador ejecuta el CRUD, las validaciones y la prueba de error 500 en una instancia separada. La primera vez instala las dependencias si hacen falta.
+
 ## Puesta en marcha
 
 1. Instala Node.js 20 o superior e inicia MySQL, por ejemplo desde XAMPP.
@@ -40,12 +44,12 @@ Los errores devuelven JSON con el campo `error`. Los datos inválidos devuelven 
 
 ## Pruebas
 
-Importa [la colección](postman/productos.postman_collection.json) en Postman y ejecuta en orden la carpeta **CRUD y validación**. La solicitud de creación guarda el ID para las siguientes operaciones. La colección comprueba el estado HTTP, el encabezado de respuesta y el esquema JSON.
+En Postman en modo local, abre la carpeta `postman` del repositorio y usa la colección v3 **Semana 10 · API de productos**. La [colección JSON](pruebas/productos.postman_collection.json) queda disponible para Newman. Ejecuta en orden la carpeta **CRUD y validación**. La solicitud de creación guarda el ID para las siguientes operaciones. La colección comprueba el estado HTTP, el encabezado de respuesta y el esquema JSON.
 
 También puedes ejecutarla con Newman.
 
 ```powershell
-npx --yes --package=newman newman run postman/productos.postman_collection.json --folder "CRUD y validación"
+npx --yes --package=newman newman run pruebas/productos.postman_collection.json --folder "CRUD y validación"
 ```
 
 Para provocar un `500` en una instancia separada, usa un puerto de base de datos sin servicio. En una terminal, ejecuta lo siguiente.
@@ -59,7 +63,7 @@ npm start
 En otra terminal, ejecuta la carpeta de prueba con la URL de esa instancia.
 
 ```powershell
-npx --yes --package=newman newman run postman/productos.postman_collection.json --folder "Base de datos no disponible" --env-var "baseUrl=http://127.0.0.1:3011"
+npx --yes --package=newman newman run pruebas/productos.postman_collection.json --folder "Base de datos no disponible" --env-var "baseUrl=http://127.0.0.1:3011"
 ```
 
 ## Evidencias

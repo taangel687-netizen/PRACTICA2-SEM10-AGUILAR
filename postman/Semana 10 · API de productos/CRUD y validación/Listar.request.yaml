@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/api/productos"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP 200", () => pm.response.to.have.status(200));
+      pm.test("Content-Type JSON", () => pm.expect(pm.response.headers.get("Content-Type")).to.match(/^application\/json\b/i));
+      pm.test("Esquema JSON", () => pm.response.to.have.jsonSchema({"type":"array","items":{"type":"object","required":["id","nombre","precio","stock"],"properties":{"id":{"type":"integer"},"nombre":{"type":"string"},"precio":{"type":"string"},"stock":{"type":"integer"}}}}));
+      pm.test("Producto persistido", () => pm.expect(pm.response.json().some(p => p.id === Number(pm.collectionVariables.get("productoId")))).to.be.true);
+    language: text/javascript
+order: 2000

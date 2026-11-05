@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{baseUrl}}/api/productos/abc"
+method: DELETE
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP 400", () => pm.response.to.have.status(400));
+      pm.test("Content-Type JSON", () => pm.expect(pm.response.headers.get("Content-Type")).to.match(/^application\/json\b/i));
+      pm.test("Esquema JSON", () => pm.response.to.have.jsonSchema({"type":"object","required":["error"],"properties":{"error":{"type":"string"}}}));
+    language: text/javascript
+order: 7000

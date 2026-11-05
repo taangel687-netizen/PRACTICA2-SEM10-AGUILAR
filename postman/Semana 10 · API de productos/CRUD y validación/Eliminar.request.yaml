@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{baseUrl}}/api/productos/{{productoId}}"
+method: DELETE
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP 200", () => pm.response.to.have.status(200));
+      pm.test("Content-Type JSON", () => pm.expect(pm.response.headers.get("Content-Type")).to.match(/^application\/json\b/i));
+      pm.test("Esquema JSON", () => pm.response.to.have.jsonSchema({"type":"object","required":["mensaje"],"properties":{"mensaje":{"type":"string"}}}));
+    language: text/javascript
+order: 4000
